@@ -158,7 +158,7 @@ stroke_scaler = joblib.load('models\scaler_stoke.pkl')
 
 def get_db_connection():
     try:
-        client = MongoClient("mongodb+srv://RK:96299@cluster0.gsjxsww.mongodb.net/?retryWrites=true&w=majority")
+        client = MongoClient("mongodb+srv://<username>:<password>@cluster0.gsjxsww.mongodb.net/?retryWrites=true&w=majority")
         db = client['cts']  
         print("Connected to MongoDB Atlas successfully!")
         return db
