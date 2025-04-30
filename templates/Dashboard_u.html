@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heart Disease Prediction Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, #87ceeb, #003366);
+            color: #333;
+        }
+        .container {
+            width: 80%;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+            
+        }
+        .container_2_chart {
+            width: 90%;
+            margin: 40px auto;
+            /* background: white; */
+            padding: 30px;
+            border-radius: 12px;
+            /* box-shadow: 0 0 15px rgba(0, 0, 0, 0.1); */
+            display: flex;
+        }
+        h1 {
+            text-align: center;
+            color: #003366;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section_2_chart {
+            margin-bottom: 30px;
+            flex: 1; /* Adjusts the width of each section */
+            margin: 10px; /* Optional: Adds some space around the sections */
+            padding: 10px; /* Optional: Adds some space inside the sections */
+            border: 1px solid #ccc; /* Optional: Adds a border to visualize the sections */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+        .section-title {
+            font-size: 22px;
+            margin-bottom: 10px;
+            color: #003399;
+            border-bottom: 2px solid #87ceeb;
+            padding-bottom: 5px;
+        }
+        .patient-info, .report-comparison, .progress-chart, .additional-charts {
+            padding: 20px;
+            background: #f0f8ff;
+            border-radius: 8px;
+            border: 1px solid #87ceeb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 2px solid white;
+            padding: 12px;
+            text-align: left;
+            border-radius: 10px;
+        }
+        th {
+            background-color: #aadcf0;
+            color: #003366;
+        }
+        td {
+            background-color: #eaf6ff;
+        }
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chart-box {
+            width: 48%;
+            height: 400px;
+            position: relative;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Heart Disease Prediction Dashboard</h1>
+
+        <!-- Patient Information Section -->
+        <div class="section patient-info">
+            <div class="section-title">Patient Information</div>
+            <table>
+                <tr>
+                    <th>Patient Id</th>
+                    <td>{{patient['P_id']}}</td>
+                </tr>
+                <tr>
+                    <th>Patient Name</th>
+                    <td>{{patient['P_Name']}}</td>
+                </tr>
+                <tr>
+                    <th>Age</th>
+                    <td>{{patient['P_Age']}}</td>
+                </tr>
+                <tr>
+                    <th>Phone Number</th>
+                    <td>{{patient['P_PhoneNo']}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Reports vs Prediction Section -->
+        <div class="section report-comparison">
+            <div class="section-title">Submitted Reports vs Prediction</div>
+            <table>
+                <tr>
+                    <th>Report Type</th>
+                    <th>Submitted Report</th>
+                    <th>Prediction</th>
+                </tr>
+                <tr>
+                    <td>Symptoms</td>
+                    <td>{{patient['act_symptoms']}}</td>
+                    <td>{{patient['syp_pred']}}</td>
+                </tr>
+                <tr>
+                    <td>Blood Test Report</td>
+                    <td>High LDL, Elevated Troponin</td>
+                    <td>{{patient['report_pred']}}</td>
+                </tr>
+                <tr>
+                    <td>ECG</td>
+                    <td>Abnormal ST Segment</td>
+                    <td>{{patient['ecg_pred']}}</td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Disease Progress and Hospital Visits Chart Section -->
+        <div class="section progress-chart">
+            <div class="section-title">Overall Disease Progress and Hospital Visits</div>
+            <div class="chart-container">
+                <canvas id="progressChart"></canvas>
+            </div>
+        </div>
+
+        <div class="container_2_chart">
+          <div class="section_2_chart additional-charts">
+              <canvas id="bpChart" display="center"></canvas>
+          </div>
+          <div class="section_2_chart additional-charts">
+            <div id="bmiGauge" ></div>
+          </div>
+      </div>
+
+        
+        
+    </div>
+
+    <!-- Chart.js for Graphs -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-gauge@1.0.1/dist/chartjs-chart-gauge.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/raphael@2.3.0/raphael.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/justgage@1.4.0/justgage.min.js"></script>
+
+    
+    <script>
+        // Define the progress chart
+        var ctx = document.getElementById('progressChart').getContext('2d');
+        var progressChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+                datasets: [{
+                    label: 'Disease Progress',
+                    data: [1, 3, 4, 6, 2, 3, 4, 7, 7, 8, 7, 9], 
+                    borderColor: '#003399',
+                    borderWidth: 2,
+                    fill: false
+                }, {
+                    label: 'Hospital Visits',
+                    data: [1, 2, 1, 3, 0, 1, 3, 5, 6, 4, 2, 1], 
+                    borderColor: '#87ceeb',
+                    borderWidth: 2,
+                    fill: false
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    },
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        const bpbar = document.getElementById('bpChart').getContext('2d');
+      const bpChart = new Chart(bpbar, {
+          type: 'bar',
+          data: {
+              labels: ['Systolic BP', 'Diastolic BP'],
+              datasets: [
+                  {
+                      label: 'Actual Values',
+                      data: [130, 90], // Replace with actual systolic and diastolic values
+                      backgroundColor: 'blue',
+                  },
+                  {
+                      label: 'Normal Values',
+                      data: [120, 80], // Replace with normal systolic and diastolic values
+                      backgroundColor: 'green',
+                      borderColor: 'darkgreen',
+                      borderWidth: 1,
+                  }
+              ]
+          },
+          options: {
+              scales: {
+                  y: {
+                      beginAtZero: true,
+                      title: {
+                          display: true,
+                          text: 'Blood Pressure (mmHg)'
+                      }
+                  },
+                  x: {
+                      title: {
+                          display: true,
+                          text: 'Blood Pressure Type'
+                      }
+                  }
+              },
+              plugins: {
+                  legend: {
+                      position: 'top',
+                  },
+                  tooltip: {
+                      callbacks: {
+                          label: function(context) {
+                              let label = context.dataset.label || '';
+                              if (label) {
+                                  label += ': ';
+                              }
+                              if (context.parsed.y !== null) {
+                                  label += context.parsed.y + ' mmHg';
+                              }
+                              return label;
+                          }
+                      }
+                  }
+              }
+          }
+      });
+      function getColorForValue(value) {
+    if (value >= 18 && value <= 25) {
+        return '#00FF00'; // Green
+    } else if ((value >= 16 && value < 18) || (value > 25 && value <= 27)) {
+        return '#FFA500'; // Orange
+    } else {
+        return '#FF0000'; // Red
+    }
+}
+
+function createGauge(value) {
+    new JustGage({
+        id: 'bmiGauge',
+        value: value,
+        min: 0,
+        max: 40,
+        title: 'BMI',
+        label: 'BMI',
+        gaugeWidthScale: 0.1,
+        valueFontColor: '#000',
+        titleFontColor: '#000',
+        labelFontColor: '#000',
+        titleFontSize: 30,  // Adjust the size of the title
+        valueFontSize: 25,  // Adjust the size of the value display
+        gaugeHeight: 400,   // Increase the height of the gauge
+        gaugeWidth: 400,    // Increase the width of the gauge
+        levelColors: [getColorForValue(value)],
+        levelColorsGradient: false,
+        customSectors: [
+            { color: '#00FF00', lo: 18, hi: 25 }, // Green range
+            { color: '#FFA500', lo: 16, hi: 18 }, // Orange range
+            { color: '#FFA500', lo: 25, hi: 27 }, // Orange range
+            { color: '#FF0000', lo: 0, hi: 16 },  // Red range
+            { color: '#FF0000', lo: 27, hi: 40 }  // Red range
+        ],
+        noGradient: true // Disable gradient color for solid sectors
+    });
+}
+
+// Set the BMI value here
+const bmiValue = 22; // Replace with actual BMI value
+createGauge(bmiValue);
+
+    </script>
+</body>
+</html>
